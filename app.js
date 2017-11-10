@@ -1,3 +1,6 @@
+/* global $
+*/
+
 'use strict';
 
 const BASE_API_URL = 'https://opentdb.com';
@@ -31,15 +34,27 @@ class TriviaAPI {
     if (this.sessionToken) {
       return callback();
     }
+        
+    const url = buildTokenUrl();
+    url.searchParams.set('command', 'request');
+        
+    $.getJSON(url, res => {
+      sessionToken = res.token;
+      callback();
+    }, err => console.log(err));
   }
   buildTokenUrl() {
     return new URL(BASE_API_URL + '/api_token.php');
   }
 }
+    
 
 //Renderer.question(questionObj)
 // class Render
 
+
+const fetchQs = new TriviaAPI();
+console.log(fetchQs.buildTokenUrl());
 
 // const _api = new TriviaAPI();
 // console.log(api.buildBaseUrl());
@@ -100,9 +115,15 @@ const buildTokenUrl = function() {
 };
 
 
+
+const fetchToken = function(callback) {
+  if (sessionToken) {
+    return callback();
+  }
+  
   const url = buildTokenUrl();
   url.searchParams.set('command', 'request');
-
+  
   $.getJSON(url, res => {
     sessionToken = res.token;
     callback();
@@ -277,6 +298,7 @@ const handleNextQuestion = function() {
   store.page = 'question';
   render();
 };
+
 
 // On DOM Ready, run render() and add event listeners
 $(() => {
