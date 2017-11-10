@@ -34,15 +34,18 @@ class TriviaAPI {
   }
 
   fetchToken(callback) {
+    // console.log(this.sessionToken);
     if (this.sessionToken) {
-      return callback();
+      return callback;
     }
             
-    const url = buildTokenUrl();
+    const url = this.buildTokenUrl();
     url.searchParams.set('command', 'request');
             
     $.getJSON(url, res => {
-      sessionToken = res.token;
+      console.log(res);
+      this.sessionToken = res.token;
+      console.log(this.sessionToken);
       callback();
     }, err => console.log(err));
   }
@@ -54,7 +57,10 @@ class TriviaAPI {
 
 
 const fetchQs = new TriviaAPI();
-console.log(fetchQs.buildTokenUrl());
+console.log(fetchQs.fetchToken(function(){
+        // console.log('CB')
+    })
+);
 
 // const _api = new TriviaAPI();
 // console.log(api.buildBaseUrl());
