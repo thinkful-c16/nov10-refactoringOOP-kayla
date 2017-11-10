@@ -55,6 +55,8 @@ class TriviaAPI {
 //Renderer.question(questionObj)
 // class Render
 
+const retrieveToken = new TriviaAPI();
+retrieveToken.fetchToken(function(){});
 
 const fetchQs = new TriviaAPI();
 console.log(fetchQs.fetchToken(function(){
@@ -103,38 +105,38 @@ const hideAll = function() {
   TOP_LEVEL_COMPONENTS.forEach(component => $(`.${component}`).hide());
 };
 
-const buildBaseUrl = function(amt = 10, query = {}) {
-  const url = new URL(BASE_API_URL + '/api.php');
-  const queryKeys = Object.keys(query);
-  url.searchParams.set('amount', amt);
+// const buildBaseUrl = function(amt = 10, query = {}) {
+//   const url = new URL(BASE_API_URL + '/api.php');
+//   const queryKeys = Object.keys(query);
+//   url.searchParams.set('amount', amt);
 
-  if (store.sessionToken) {
-    url.searchParams.set('token', store.sessionToken);
-  }
+//   if (store.sessionToken) {
+//     url.searchParams.set('token', store.sessionToken);
+//   }
 
-  queryKeys.forEach(key => url.searchParams.set(key, query[key]));
-  return url;
-};
+//   queryKeys.forEach(key => url.searchParams.set(key, query[key]));
+//   return url;
+// };
 
-const buildTokenUrl = function() {
-  return new URL(BASE_API_URL + '/api_token.php');
-};
+// const buildTokenUrl = function() {
+//   return new URL(BASE_API_URL + '/api_token.php');
+// };
 
 
 
-const fetchToken = function(callback) {
-  if (sessionToken) {
-    return callback();
-  }
+// const fetchToken = function(callback) {
+//   if (sessionToken) {
+//     return callback();
+//   }
   
-  const url = buildTokenUrl();
-  url.searchParams.set('command', 'request');
+//   const url = buildTokenUrl();
+//   url.searchParams.set('command', 'request');
   
-  $.getJSON(url, res => {
-    sessionToken = res.token;
-    callback();
-  }, err => console.log(err));
-};
+//   $.getJSON(url, res => {
+//     sessionToken = res.token;
+//     callback();
+//   }, err => console.log(err));
+// };
 
 
 //API
@@ -332,9 +334,14 @@ $(() => {
   render();
 
   // Fetch session token, enable Start button when complete
-  fetchToken(() => {
+//   fetchToken(() => {
+//     $('.js-start').attr('disabled', false);
+//   });
+
+  retrieveToken.fetchToken(function(){
     $('.js-start').attr('disabled', false);
   });
+  
 
   $('.js-intro, .js-outro').on('click', '.js-start', handleStartQuiz);
   $('.js-question').on('submit', handleSubmitAnswer);
