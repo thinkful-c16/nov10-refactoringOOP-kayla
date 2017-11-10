@@ -29,22 +29,22 @@ class TriviaAPI {
     return url;
   }
   //revisit this
+  buildTokenUrl() {
+    return new URL(BASE_API_URL + '/api_token.php');
+  }
 
   fetchToken(callback) {
     if (this.sessionToken) {
       return callback();
     }
-        
+            
     const url = buildTokenUrl();
     url.searchParams.set('command', 'request');
-        
+            
     $.getJSON(url, res => {
       sessionToken = res.token;
       callback();
     }, err => console.log(err));
-  }
-  buildTokenUrl() {
-    return new URL(BASE_API_URL + '/api_token.php');
   }
 }
     
@@ -130,15 +130,19 @@ const fetchToken = function(callback) {
   }, err => console.log(err));
 };
 
+
+//API
 const fetchQuestions = function(amt, query, callback) {
   $.getJSON(buildBaseUrl(amt, query), callback, err => console.log(err.message));
 };
 
+//STORE
 const seedQuestions = function(questions) {
   QUESTIONS.length = 0;
   questions.forEach(q => QUESTIONS.push(createQuestion(q)));
 };
 
+//API
 const fetchAndSeedQuestions = function(amt, query, callback) {
   fetchQuestions(amt, query, res => {
     seedQuestions(res.results);
@@ -146,6 +150,8 @@ const fetchAndSeedQuestions = function(amt, query, callback) {
   });
 };
 
+
+//STORE
 const createQuestion = function(question) {
   return {
     text: question.question,
@@ -154,6 +160,7 @@ const createQuestion = function(question) {
   };
 };
 
+//STORE
 const getScore = function() {
   return store.userAnswers.reduce((accumulator, userAnswer, index) => {
     const question = getQuestion(index);
@@ -166,6 +173,7 @@ const getScore = function() {
   }, 0);
 };
 
+//STORE
 const getProgress = function() {
   return {
     current: store.currentQuestionIndex + 1,
@@ -173,16 +181,20 @@ const getProgress = function() {
   };
 };
 
+//STORE
 const getCurrentQuestion = function() {
   return QUESTIONS[store.currentQuestionIndex];
 };
 
+//STORE
 const getQuestion = function(index) {
   return QUESTIONS[index];
 };
 
 // HTML generator functions
 // ========================
+
+//RENDER
 const generateAnswerItemHtml = function(answer) {
   return `
     <li class="answer-item">
@@ -192,6 +204,7 @@ const generateAnswerItemHtml = function(answer) {
   `;
 };
 
+//RENDER
 const generateQuestionHtml = function(question) {
   const answers = question.answers
     .map((answer, index) => generateAnswerItemHtml(answer, index))
@@ -208,6 +221,7 @@ const generateQuestionHtml = function(question) {
   `;
 };
 
+//RENDER
 const generateFeedbackHtml = function(feedback) {
   return `
     <p>
@@ -219,6 +233,8 @@ const generateFeedbackHtml = function(feedback) {
 
 // Render function - uses `store` object to construct entire page every time it's run
 // ===============
+
+//RENDER
 const render = function() {
   let html;
   hideAll();
@@ -261,6 +277,8 @@ const render = function() {
 
 // Event handler functions
 // =======================
+
+//STORE
 const handleStartQuiz = function() {
   store = getInitialStore();
   store.page = 'question';
@@ -271,6 +289,7 @@ const handleStartQuiz = function() {
   });
 };
 
+//STORE
 const handleSubmitAnswer = function(e) {
   e.preventDefault();
   const question = getCurrentQuestion();
@@ -287,6 +306,7 @@ const handleSubmitAnswer = function(e) {
   render();
 };
 
+//STORE
 const handleNextQuestion = function() {
   if (store.currentQuestionIndex === QUESTIONS.length - 1) {
     store.page = 'outro';
