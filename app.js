@@ -3,11 +3,89 @@
 
 'use strict';
 
-//RENDER
-const TOP_LEVEL_COMPONENTS = [
-  'js-intro', 'js-question', 'js-question-feedback', 
-  'js-outro', 'js-quiz-status'
-];
+
+class Render {
+  constructor() {
+    this.TOP_LEVEL_COMPONENTS = [
+      'js-intro', 'js-question', 'js-question-feedback', 
+      'js-outro', 'js-quiz-status'
+    ];
+  }
+  hideAll() {
+    this.TOP_LEVEL_COMPONENTS.forEach(component => $(`.${component}`).hide());
+  }
+  generateQuestionHtml(question) {
+    const answers = question.answers
+      .map((answer, index) => this.generateAnswerItemHtml(answer, index))
+      .join('');
+  
+    return `
+      <form>
+        <fieldset>
+          <legend class="question-text">${question.text}</legend>
+            ${answers}
+            <button type="submit">Submit</button>
+        </fieldset>
+      </form>
+    `;
+  }
+  generateAnswerItemHtml(answer) {
+    return `
+      <li class="answer-item">
+        <input type="radio" name="answers" value="${answer}" />
+        <span class="answer-text">${answer}</span>
+      </li>
+    `;
+  }
+  generateFeedbackHtml(feedback) {
+    return `
+      <p>
+        ${feedback}
+      </p>
+      <button class="continue js-continue">Continue</button>
+    `;
+  }
+  render() {
+    let html;
+    this.hideAll();
+    const question = currentQ.getCurrentQuestion();
+    const { feedback } = new Store; 
+    const { current, total } = progress.getProgress();
+  
+    $('.js-score').html(`<span>Score: ${score.getScore()}</span>`);
+    $('.js-progress').html(`<span>Question ${current} of ${total}`);
+    
+    switch (page) {
+    case 'intro':
+      $('.js-intro').show();
+      break;
+      
+    case 'question':
+      html = this.generateQuestionHtml(question);
+      $('.js-question').html(html);
+      $('.js-question').show();
+      $('.quiz-status').show();
+      break;
+  
+    case 'answer':
+      html = this.generateFeedbackHtml(feedback);
+      $('.js-question-feedback').html(html);
+      $('.js-question-feedback').show();
+      $('.quiz-status').show();
+      break;
+  
+    case 'outro':
+      $('.js-outro').show();
+      $('.quiz-status').show();
+      break;
+  
+    default:
+      return;
+    }
+  }
+}
+
+
 
 //start here
 class TriviaAPI {
@@ -51,246 +129,157 @@ class TriviaAPI {
   }
   fetchAndSeedQuestions(amt, query, callback) {
     this.fetchQuestions(amt, query, res => {
-      seedQuestions(res.results);
+      seedQs.seedQuestions(res.results);
       callback();
     });
   }
+  
   
 }
 
 const retrieveToken = new TriviaAPI();
 const fetchAndSeedQs = new TriviaAPI();
+ 
 
-// class Store {
-//   constructor() {
-//     getInitialStore() 
-//       this.page = 'intro';
-//       this.currentQuestionIndex = null,
-//       this.userAnswers = [];
-//       this.feedback = null;
-//     }
-//   }
-// }
-
-
-
-let QUESTIONS = [];
-
-// token is global because store is reset between quiz games, but token should persist for 
-// entire session
-let sessionToken;
-
-
-const getInitialStore = function(){
-  return {
-    page: 'intro',
-    currentQuestionIndex: null,
-    userAnswers: [],
-    feedback: null,
-    sessionToken,
-  };
-};
-
-let store = getInitialStore();
-
-// Helper functions
-// ===============
-const hideAll = function() {
-  TOP_LEVEL_COMPONENTS.forEach(component => $(`.${component}`).hide());
-};
-
-//STORE
-const seedQuestions = function(questions) {
-  QUESTIONS.length = 0;
-  questions.forEach(q => QUESTIONS.push(createQuestion(q)));
-};
-
-
-//STORE
-const createQuestion = function(question) {
-  return {
-    text: question.question,
-    answers: [ ...question.incorrect_answers, question.correct_answer ],
-    correctAnswer: question.correct_answer
-  };
-};
-
-//STORE
-const getScore = function() {
-  return store.userAnswers.reduce((accumulator, userAnswer, index) => {
-    const question = getQuestion(index);
-
-    if (question.correctAnswer === userAnswer) {
-      return accumulator + 1;
-    } else {
-      return accumulator;
-    }
-  }, 0);
-};
-
-//STORE
-const getProgress = function() {
-  return {
-    current: store.currentQuestionIndex + 1,
-    total: QUESTIONS.length
-  };
-};
-
-//STORE
-const getCurrentQuestion = function() {
-  return QUESTIONS[store.currentQuestionIndex];
-};
-
-//STORE
-const getQuestion = function(index) {
-  return QUESTIONS[index];
-};
-
-// HTML generator functions
-// ========================
-
-//RENDER
-const generateAnswerItemHtml = function(answer) {
-  return `
-    <li class="answer-item">
-      <input type="radio" name="answers" value="${answer}" />
-      <span class="answer-text">${answer}</span>
-    </li>
-  `;
-};
-
-//RENDER
-const generateQuestionHtml = function(question) {
-  const answers = question.answers
-    .map((answer, index) => generateAnswerItemHtml(answer, index))
-    .join('');
-
-  return `
-    <form>
-      <fieldset>
-        <legend class="question-text">${question.text}</legend>
-          ${answers}
-          <button type="submit">Submit</button>
-      </fieldset>
-    </form>
-  `;
-};
-
-//RENDER
-const generateFeedbackHtml = function(feedback) {
-  return `
-    <p>
-      ${feedback}
-    </p>
-    <button class="continue js-continue">Continue</button>
-  `;
-};
-
-// Render function - uses `store` object to construct entire page every time it's run
-// ===============
-
-//RENDER
-const render = function() {
-  let html;
-  hideAll();
-
-  const question = getCurrentQuestion();
-  const { feedback } = store; 
-  const { current, total } = getProgress();
-
-  $('.js-score').html(`<span>Score: ${getScore()}</span>`);
-  $('.js-progress').html(`<span>Question ${current} of ${total}`);
-
-  switch (store.page) {
-  case 'intro':
-    $('.js-intro').show();
-    break;
+class Store {
+  constructor() {
+    this.page = 'intro';
+    this.currentQuestionIndex = null,
+    this.userAnswers = [];
+    this.feedback = null;
+    this.QUESTIONS = [];
     
-  case 'question':
-    html = generateQuestionHtml(question);
-    $('.js-question').html(html);
-    $('.js-question').show();
-    $('.quiz-status').show();
-    break;
-
-  case 'answer':
-    html = generateFeedbackHtml(feedback);
-    $('.js-question-feedback').html(html);
-    $('.js-question-feedback').show();
-    $('.quiz-status').show();
-    break;
-
-  case 'outro':
-    $('.js-outro').show();
-    $('.quiz-status').show();
-    break;
-
-  default:
-    return;
   }
-};
-
-// Event handler functions
-// =======================
-
-//STORE
-const handleStartQuiz = function() {
-  store = getInitialStore();
-  store.page = 'question';
-  store.currentQuestionIndex = 0;
-  const quantity = parseInt($('#js-question-quantity').find(':selected').val(), 10);
-  fetchAndSeedQs.fetchAndSeedQuestions(quantity, { type: 'multiple' }, () => {
-    render();
-  });
-};
-
-//STORE
-const handleSubmitAnswer = function(e) {
-  e.preventDefault();
-  const question = getCurrentQuestion();
-  const selected = $('input:checked').val();
-  store.userAnswers.push(selected);
   
-  if (selected === question.correctAnswer) {
-    store.feedback = 'You got it!';
-  } else {
-    store.feedback = `Too bad! The correct answer was: ${question.correctAnswer}`;
+  seedQuestions(questions) {
+    this.QUESTIONS.length = 0;
+    questions.forEach(q => this.QUESTIONS.push(this.createQuestion(q)));
   }
+  createQuestion(question) {
+    return {
+      text: question.question,
+      answers: [ ...question.incorrect_answers, question.correct_answer ],
+      correctAnswer: question.correct_answer
+    };
+  }
+  getScore() {
+    return this.userAnswers.reduce((accumulator, userAnswer, index) => {
+      const question = this.getQuestion(index);
+  
+      if (question.correctAnswer === userAnswer) {
+        return accumulator + 1;
+      } else {
+        return accumulator;
+      }
+    }, 0);
+  }
+  getProgress() {
+    return {
+      current: this.currentQuestionIndex + 1,
+      total: this.QUESTIONS.length
+    };
+  }
+  getCurrentQuestion() {
+    return this.QUESTIONS[this.currentQuestionIndex];
+  }
+  getQuestion(index) {
+    return this.QUESTIONS[index];
+  }
+  handleSubmitAnswer(e) {
+    // e.preventDefault();
+    const question = currentQ.getCurrentQuestion();
+    const selected = $('input:checked').val();
+    this.userAnswers.push(selected);
+    
+    if (selected === question.correctAnswer) {
+      this.feedback = 'You got it!';
+    } else {
+      this.feedback = `Too bad! The correct answer was: ${question.correctAnswer}`;
+    }
+  
+    this.page = 'answer';
+    mainRendering.render();
+  }
+  handleNextQuestion() {
+    if (this.currentQuestionIndex === this.QUESTIONS.length - 1) {
+      this.page = 'outro';
+      mainRendering.render();
+      return;
+    }
+  
+    this.currentQuestionIndex++;
+    this.page = 'question';
+    mainRendering.render();
+   
+  }
+}
 
-  store.page = 'answer';
-  render();
-};
+const submitAns = new Store();
 
-//STORE
-const handleNextQuestion = function() {
-  if (store.currentQuestionIndex === QUESTIONS.length - 1) {
-    store.page = 'outro';
-    render();
+const seedQs = new Store();
+
+const page = new Store();
+
+
+const score = new Store();
+score.getScore();
+
+const progress = new Store();
+progress.getProgress();
+
+const currentQ = new Store();
+currentQ.getCurrentQuestion();
+
+const mainRendering = new Render();
+mainRendering.render();
+
+const topLevel = new Render();
+console.log(topLevel.hideAll());
+
+
+const startQuiz = new Store();
+
+
+
+// const handleSubmitAnswer = function(e) {
+//   e.preventDefault();
+//   const question = currentQ.getCurrentQuestion();
+//   const selected = $('input:checked').val();
+//   userAnswers.push(selected);
+  
+//   if (selected === question.correctAnswer) {
+//     this.feedback = 'You got it!';
+//   } else {
+//     this.feedback = `Too bad! The correct answer was: ${question.correctAnswer}`;
+//   }
+
+//   this.page = 'answer';
+//   mainRendering.render();
+// };
+
+function handleNextQuestion() {
+  if (this.currentQuestionIndex === this.QUESTIONS.length - 1) {
+    this.page = 'outro';
+    mainRendering.render();
     return;
   }
 
-  store.currentQuestionIndex++;
-  store.page = 'question';
-  render();
-};
+  this.currentQuestionIndex++;
+  this.page = 'question';
+  mainRendering.render();
+ 
+}
 
 
 // On DOM Ready, run render() and add event listeners
 $(() => {
   // Run first render
-  render();
-
-  // Fetch session token, enable Start button when complete
-//   fetchToken(() => {
-//     $('.js-start').attr('disabled', false);
-//   });
-
+  mainRendering.render();
   retrieveToken.fetchToken(function(){
     $('.js-start').attr('disabled', false);
   });
-  
 
-  $('.js-intro, .js-outro').on('click', '.js-start', handleStartQuiz);
-  $('.js-question').on('submit', handleSubmitAnswer);
-  $('.js-question-feedback').on('click', '.js-continue', handleNextQuestion);
+  $('.js-intro, .js-outro').on('click', '.js-start', startQuiz);
+  $('.js-question').on('submit', submitAns.handleSubmitAnswer());
+  $('.js-question-feedback').on('click', '.js-continue', handleNextQuestion(event));
 });
