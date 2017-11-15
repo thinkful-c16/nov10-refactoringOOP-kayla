@@ -48,14 +48,14 @@ class Render {
   render() {
     let html;
     this.hideAll();
-    const question = currentQ.getCurrentQuestion();
+    const question = quiz.getCurrentQuestion();
     const { feedback } = new Store; 
-    const { current, total } = progress.getProgress();
+    const { current, total } = quiz.getProgress();
   
-    $('.js-score').html(`<span>Score: ${score.getScore()}</span>`);
+    $('.js-score').html(`<span>Score: ${quiz.getScore()}</span>`);
     $('.js-progress').html(`<span>Question ${current} of ${total}`);
     
-    switch (page) {
+    switch (quiz.page) {
     case 'intro':
       $('.js-intro').show();
       break;
@@ -129,7 +129,7 @@ class TriviaAPI {
   }
   fetchAndSeedQuestions(amt, query, callback) {
     this.fetchQuestions(amt, query, res => {
-      seedQs.seedQuestions(res.results);
+      this.seedQuestions(res.results);
       callback();
     });
   }
@@ -142,7 +142,8 @@ const fetchAndSeedQs = new TriviaAPI();
  
 
 class Store {
-  constructor() {
+  constructor() 
+  {
     this.page = 'intro';
     this.currentQuestionIndex = null,
     this.userAnswers = [];
@@ -186,8 +187,8 @@ class Store {
     return this.QUESTIONS[index];
   }
   handleSubmitAnswer(e) {
-    // e.preventDefault();
-    const question = currentQ.getCurrentQuestion();
+    e.preventDefault();
+    const question = this.getCurrentQuestion();
     const selected = $('input:checked').val();
     this.userAnswers.push(selected);
     
@@ -214,30 +215,35 @@ class Store {
   }
 }
 
-const submitAns = new Store();
-
-const seedQs = new Store();
-
-const page = new Store();
+// const submitAns = new Store();
 
 
-const score = new Store();
-score.getScore();
 
-const progress = new Store();
-progress.getProgress();
+// const seedQs = new Store();
 
-const currentQ = new Store();
-currentQ.getCurrentQuestion();
+// const page = new Store();
+
+
+// const score = new Store();
+// score.getScore();
+
+// const progress = new Store();
+// progress.getProgress();
+
+// const currentQ = new Store();
+// currentQ.getCurrentQuestion();
+const quiz = new Store();
+
 
 const mainRendering = new Render();
+
 mainRendering.render();
 
-const topLevel = new Render();
-console.log(topLevel.hideAll());
+// const topLevel = new Render();
+// console.log(topLevel.hideAll());
 
-
-const startQuiz = new Store();
+//create new instances in the global space to reference 
+// const quiz = new Store();
 
 
 
@@ -278,8 +284,8 @@ $(() => {
   retrieveToken.fetchToken(function(){
     $('.js-start').attr('disabled', false);
   });
-
-  $('.js-intro, .js-outro').on('click', '.js-start', startQuiz);
-  $('.js-question').on('submit', submitAns.handleSubmitAnswer());
-  $('.js-question-feedback').on('click', '.js-continue', handleNextQuestion(event));
+//do not invoke the function here; just have it recieve the event object
+  $('.js-intro, .js-outro').on('click', '.js-start', quiz);
+  $('.js-question').on('submit', quiz.handleSubmitAnswer);
+  $('.js-question-feedback').on('click', '.js-continue', quiz.handleNextQuestion);
 });
