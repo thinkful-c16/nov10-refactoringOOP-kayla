@@ -3,7 +3,7 @@
 
 'use strict';
 
-const BASE_API_URL = 'https://opentdb.com';
+//RENDER
 const TOP_LEVEL_COMPONENTS = [
   'js-intro', 'js-question', 'js-question-feedback', 
   'js-outro', 'js-quiz-status'
@@ -17,24 +17,21 @@ class TriviaAPI {
   }
 
   buildBaseUrl(amt = 10, query = {}) {
-    const url = new URL(BASE_API_URL + '/api.php');
+    const url = new URL(this.BASE_API_URL + '/api.php');
     const queryKeys = Object.keys(query);
     url.searchParams.set('amount', amt);
   
     if (this.sessionToken) {
       url.searchParams.set('token', this.sessionToken);
     }
-  
     queryKeys.forEach(key => url.searchParams.set(key, query[key]));
     return url;
   }
-  //revisit this
   buildTokenUrl() {
-    return new URL(BASE_API_URL + '/api_token.php');
+    return new URL(this.BASE_API_URL + '/api_token.php');
   }
 
   fetchToken(callback) {
-    // console.log(this.sessionToken);
     if (this.sessionToken) {
       return callback;
     }
@@ -49,26 +46,32 @@ class TriviaAPI {
       callback();
     }, err => console.log(err));
   }
+  fetchQuestions(amt, query, callback) {
+    $.getJSON(this.buildBaseUrl(amt, query), callback, err => console.log(err.message));
+  }
+  fetchAndSeedQuestions(amt, query, callback) {
+    this.fetchQuestions(amt, query, res => {
+      seedQuestions(res.results);
+      callback();
+    });
+  }
+  
 }
-    
-
-//Renderer.question(questionObj)
-// class Render
 
 const retrieveToken = new TriviaAPI();
-retrieveToken.fetchToken(function(){});
+const fetchAndSeedQs = new TriviaAPI();
 
-const fetchQs = new TriviaAPI();
-console.log(fetchQs.fetchToken(function(){
-        // console.log('CB')
-    })
-);
+// class Store {
+//   constructor() {
+//     getInitialStore() 
+//       this.page = 'intro';
+//       this.currentQuestionIndex = null,
+//       this.userAnswers = [];
+//       this.feedback = null;
+//     }
+//   }
+// }
 
-// const _api = new TriviaAPI();
-// console.log(api.buildBaseUrl());
-// const url = new TriviaAPI();
-// console.log(url.buildTokenUrl());
-// var token = new TriviaAPI();
 
 
 let QUESTIONS = [];
@@ -77,15 +80,6 @@ let QUESTIONS = [];
 // entire session
 let sessionToken;
 
-// class Store {
-//   constructor() {
-//     this.page = 'intro';
-//     this.currentQuestionIndex = null,
-//     this.userAnswers = [];
-//     this.feedback = null;
-//   }
-  
-// }
 
 const getInitialStore = function(){
   return {
@@ -105,57 +99,10 @@ const hideAll = function() {
   TOP_LEVEL_COMPONENTS.forEach(component => $(`.${component}`).hide());
 };
 
-// const buildBaseUrl = function(amt = 10, query = {}) {
-//   const url = new URL(BASE_API_URL + '/api.php');
-//   const queryKeys = Object.keys(query);
-//   url.searchParams.set('amount', amt);
-
-//   if (store.sessionToken) {
-//     url.searchParams.set('token', store.sessionToken);
-//   }
-
-//   queryKeys.forEach(key => url.searchParams.set(key, query[key]));
-//   return url;
-// };
-
-// const buildTokenUrl = function() {
-//   return new URL(BASE_API_URL + '/api_token.php');
-// };
-
-
-
-// const fetchToken = function(callback) {
-//   if (sessionToken) {
-//     return callback();
-//   }
-  
-//   const url = buildTokenUrl();
-//   url.searchParams.set('command', 'request');
-  
-//   $.getJSON(url, res => {
-//     sessionToken = res.token;
-//     callback();
-//   }, err => console.log(err));
-// };
-
-
-//API
-const fetchQuestions = function(amt, query, callback) {
-  $.getJSON(buildBaseUrl(amt, query), callback, err => console.log(err.message));
-};
-
 //STORE
 const seedQuestions = function(questions) {
   QUESTIONS.length = 0;
   questions.forEach(q => QUESTIONS.push(createQuestion(q)));
-};
-
-//API
-const fetchAndSeedQuestions = function(amt, query, callback) {
-  fetchQuestions(amt, query, res => {
-    seedQuestions(res.results);
-    callback();
-  });
 };
 
 
@@ -292,7 +239,7 @@ const handleStartQuiz = function() {
   store.page = 'question';
   store.currentQuestionIndex = 0;
   const quantity = parseInt($('#js-question-quantity').find(':selected').val(), 10);
-  fetchAndSeedQuestions(quantity, { type: 'multiple' }, () => {
+  fetchAndSeedQs.fetchAndSeedQuestions(quantity, { type: 'multiple' }, () => {
     render();
   });
 };
